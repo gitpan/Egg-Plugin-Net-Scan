@@ -1,0 +1,18 @@
+abstract: Network host's port is checked.
+author: Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
+build_requires: 
+  Test::Perl::Critic: 0
+  Test::Pod: 0
+  Test::Pod::Coverage: 0
+  Test::Simple: 0
+distribution_type: module
+generated_by: Module::Install version 0.64
+license: perl
+name: Egg-Plugin-Net-Scan
+no_index: 
+  directory: 
+    - inc
+    - t
+requires: 
+  Egg::Release: 2
+version: 2.00
