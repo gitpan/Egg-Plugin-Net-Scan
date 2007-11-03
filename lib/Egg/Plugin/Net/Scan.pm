@@ -1,4 +1,15 @@
 package Egg::Plugin::Net::Scan;
+#
+# Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
+#
+# $Id: Scan.pm 209 2007-11-03 14:34:58Z lushe $
+#
+use strict;
+use warnings;
+use Socket;
+use Carp qw/croak/;
+
+our $VERSION = '2.01';
 
 =head1 NAME
 
@@ -25,14 +36,6 @@ It is a plugin to check the operational condition of arbitrary host's port.
 
 * Because 'alarm' command is used, it operates in the platform that doesn't
   correspond. A fatal error occurs when it is made to do.
-
-=cut
-use strict;
-use warnings;
-use Socket;
-use Carp qw/croak/;
-
-our $VERSION = '2.00';
 
 =head1 METHODS
 
@@ -63,7 +66,29 @@ Default is 'tcp'.
 
 =back
 
+=head1 RESULT METHODS
+
+It is a method supported by Egg::Plugin::Net::Scan::Result.
+
+=head2 new
+
+Constructor.
+
+=head2 is_success
+
+When the answer from the port is admitted, true is restored.
+
+=head2 is_block
+
+When the answer from the port doesn't come back within the second of
+timeout, true is returned.
+
+=head2 is_error
+
+When some errors occur, the error message is returned.
+
 =cut
+
 sub port_scan {
 	my $e= shift;
 	my $host= shift || croak q{ I want 'Host name' or 'IP address'. };
@@ -111,29 +136,6 @@ use strict;
 use base qw/Class::Accessor::Fast/;
 
 __PACKAGE__->mk_accessors(qw/is_success no_response is_error/);
-
-=head1 RESULT METHODS
-
-It is a method supported by Egg::Plugin::Net::Scan::Result.
-
-=head2 new
-
-Constructor.
-
-=head2 is_success
-
-When the answer from the port is admitted, true is restored.
-
-=head2 is_block
-
-When the answer from the port doesn't come back within the second of
-timeout, true is returned.
-
-=head2 is_error
-
-When some errors occur, the error message is returned.
-
-=cut
 
 sub new {
 	my $class = shift;

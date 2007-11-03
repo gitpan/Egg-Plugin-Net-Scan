@@ -8,7 +8,7 @@ license      'perl';
 
 requires 'Egg::Release' => 2.00;
 
-build_requires 'Test::Simple';
+build_requires 'Test::More';
 build_requires 'Test::Pod';
 build_requires 'Test::Perl::Critic';
 build_requires 'Test::Pod::Coverage';
