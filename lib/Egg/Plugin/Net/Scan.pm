@@ -2,14 +2,76 @@ package Egg::Plugin::Net::Scan;
 #
 # Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 #
-# $Id: Scan.pm 209 2007-11-03 14:34:58Z lushe $
+# $Id: Scan.pm 270 2008-02-24 06:35:56Z lushe $
 #
 use strict;
 use warnings;
+use Carp qw/ croak /;
 use Socket;
-use Carp qw/croak/;
 
-our $VERSION = '2.01';
+our $VERSION = '3.00';
+
+sub port_scan {
+	my $e= shift;
+	my $host= shift || croak q{ I want 'Host name' or 'IP address'. };
+	my $port= shift || croak q{ I want 'Port number'. };
+	my $attr= $_[1] ? {@_}: ($_[0] || {});
+
+	if ($host!~/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) {
+		my $name= gethostbyname($host)
+		|| Egg::Plugin::Net::Scan::Result->new(q{ The Host doesn't have IP address. });
+		$host= join '.', unpack("C4", $name);
+	}
+	$attr->{timeout} ||= 1;
+	$attr->{protcol} ||= 'tcp';
+	my($protname, $alias ,$protnum)= getprotobyname($attr->{protcol});
+	my $connect= inet_aton($host)
+	|| Egg::Plugin::Net::Scan::Result->new(qq{ Cannot connect $host\:$port. });
+	eval {
+		my $main_alrm= alarm(0);
+		local($SIG{ALRM})= sub{
+			alarm($main_alrm);
+			die qq/No response $host\:$port./;
+		  };
+		alarm($attr->{timeout});
+		if ($protname eq 'udp') {
+			socket(SOCK, PF_INET, SOCK_DGRAM,  $protnum)
+			  || die q/Socket creation fault/;
+		} else {
+			socket(SOCK, PF_INET, SOCK_STREAM, $protnum)
+			  || die q/Socket creation fault/;
+		}
+		connect(SOCK, sockaddr_in($port, $connect))
+		  || die qq/Cannot connect $host\:$port./;
+		select(SOCK);
+		local $|= 1;
+		select(STDOUT);
+		close(SOCK);
+		alarm($main_alrm);
+	 };
+	my $err= $@ || 'is success';
+	Egg::Plugin::Net::Scan::Result->new($err);
+}
+
+package Egg::Plugin::Net::Scan::Result;
+use strict;
+use base qw/ Class::Accessor::Fast /;
+
+__PACKAGE__->mk_accessors(qw/ is_success no_response is_error /);
+
+sub new {
+	my $class = shift;
+	my $errstr= shift || 0;
+	my $param =
+	   $errstr=~/^is success/  ? { is_success=> 1 }
+	 : $errstr=~/^No response/ ? { is_block  => 1 }
+	 : { is_error=> $errstr };
+	bless $param, $class;
+}
+
+1;
+
+__END__
 
 =head1 NAME
 
@@ -70,6 +132,8 @@ Default is 'tcp'.
 
 It is a method supported by Egg::Plugin::Net::Scan::Result.
 
+  my $result= $e->port_cacan( ....... );
+
 =head2 new
 
 Constructor.
@@ -87,66 +151,6 @@ timeout, true is returned.
 
 When some errors occur, the error message is returned.
 
-=cut
-
-sub port_scan {
-	my $e= shift;
-	my $host= shift || croak q{ I want 'Host name' or 'IP address'. };
-	my $port= shift || croak q{ I want 'Port number'. };
-	my $attr= $_[1] ? {@_}: ($_[0] || {});
-
-	if ($host!~/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) {
-		my $name= gethostbyname($host)
-		|| Egg::Plugin::Net::Scan::Result->new(q{ The Host doesn't have IP address. });
-		$host= join '.', unpack("C4", $name);
-	}
-	$attr->{timeout} ||= 1;
-	$attr->{protcol} ||= 'tcp';
-	my($protname, $alias ,$protnum)= getprotobyname($attr->{protcol});
-	my $connect= inet_aton($host)
-	|| Egg::Plugin::Net::Scan::Result->new(qq{ Cannot connect $host\:$port. });
-	eval {
-		my $main_alrm= alarm(0);
-		local($SIG{ALRM})= sub{
-			alarm($main_alrm);
-			die qq/No response $host\:$port./;
-		  };
-		alarm($attr->{timeout});
-		if ($protname eq 'udp') {
-			socket(SOCK, PF_INET, SOCK_DGRAM,  $protnum)
-			  || die q/Socket creation fault/;
-		} else {
-			socket(SOCK, PF_INET, SOCK_STREAM, $protnum)
-			  || die q/Socket creation fault/;
-		}
-		connect(SOCK, sockaddr_in($port, $connect))
-		  || die qq/Cannot connect $host\:$port./;
-		select(SOCK);
-		local $|= 1;
-		select(STDOUT);
-		close(SOCK);
-		alarm($main_alrm);
-	 };
-	my $err= $@ || 'is success';
-	Egg::Plugin::Net::Scan::Result->new($err);
-}
-
-package Egg::Plugin::Net::Scan::Result;
-use strict;
-use base qw/Class::Accessor::Fast/;
-
-__PACKAGE__->mk_accessors(qw/is_success no_response is_error/);
-
-sub new {
-	my $class = shift;
-	my $errstr= shift || 0;
-	my $param =
-	   $errstr=~/^is success/  ? { is_success=> 1 }
-	 : $errstr=~/^No response/ ? { is_block  => 1 }
-	 : { is_error=> $errstr };
-	bless $param, $class;
-}
-
 =head1 SEE ALSO
 
 L<Socket>,
@@ -156,9 +160,9 @@ L<Egg::Release>,
 
 Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
+Copyright (C) 2008 Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,
@@ -166,4 +170,3 @@ at your option, any later version of Perl 5 you may have available.
 
 =cut
 
-1;
