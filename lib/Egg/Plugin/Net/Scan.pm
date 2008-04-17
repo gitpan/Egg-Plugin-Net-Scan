@@ -2,14 +2,14 @@ package Egg::Plugin::Net::Scan;
 #
 # Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 #
-# $Id: Scan.pm 270 2008-02-24 06:35:56Z lushe $
+# $Id: Scan.pm 321 2008-04-17 12:31:14Z lushe $
 #
 use strict;
 use warnings;
 use Carp qw/ croak /;
 use Socket;
 
-our $VERSION = '3.00';
+our $VERSION = '3.01';
 
 sub port_scan {
 	my $e= shift;
