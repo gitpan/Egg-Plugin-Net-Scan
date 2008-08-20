@@ -1,5 +1,8 @@
 Revision history for Perl extension Egg::Plugin::Net::Scan.
 
+3.02  2008/08/20
+	- bugfix for Egg::Plugin::Net::Scan.
+
 3.01  2008/04/17
 	- Build.PL is abolished.
 

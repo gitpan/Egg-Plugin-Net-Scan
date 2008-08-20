@@ -2,14 +2,14 @@ package Egg::Plugin::Net::Scan;
 #
 # Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 #
-# $Id: Scan.pm 321 2008-04-17 12:31:14Z lushe $
+# $Id: Scan.pm 363 2008-08-20 00:07:33Z lushe $
 #
 use strict;
 use warnings;
 use Carp qw/ croak /;
 use Socket;
 
-our $VERSION = '3.01';
+our $VERSION = '3.02';
 
 sub port_scan {
 	my $e= shift;
@@ -19,14 +19,14 @@ sub port_scan {
 
 	if ($host!~/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) {
 		my $name= gethostbyname($host)
-		|| Egg::Plugin::Net::Scan::Result->new(q{ The Host doesn't have IP address. });
+		|| return Egg::Plugin::Net::Scan::Result->new(q{ The Host doesn't have IP address. });
 		$host= join '.', unpack("C4", $name);
 	}
 	$attr->{timeout} ||= 1;
 	$attr->{protcol} ||= 'tcp';
 	my($protname, $alias ,$protnum)= getprotobyname($attr->{protcol});
 	my $connect= inet_aton($host)
-	|| Egg::Plugin::Net::Scan::Result->new(qq{ Cannot connect $host\:$port. });
+	|| return Egg::Plugin::Net::Scan::Result->new(qq{ Cannot connect $host\:$port. });
 	eval {
 		my $main_alrm= alarm(0);
 		local($SIG{ALRM})= sub{
@@ -162,7 +162,7 @@ Masatoshi Mizuno E<lt>lusheE<64>cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>, All Rights Reserved.
+Copyright (C) 2008 Bee Flag, Corp. E<lt>L<http://egg.bomcity.com/>E<gt>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,
